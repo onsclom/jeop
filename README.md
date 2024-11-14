@@ -1,4 +1,4 @@
-# server
+# jeop
 
 To install dependencies:
 
