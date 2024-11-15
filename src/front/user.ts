@@ -1,4 +1,10 @@
-import { sendClientToServerMessage as sendMessage } from "../communication";
+/*
+users will probably be on their phone
+
+upon
+*/
+
+import { sendClientToServerMessage as sendMessage } from "../server/communication";
 
 let name = prompt("what is your name?");
 while (name === null || name === "null") {

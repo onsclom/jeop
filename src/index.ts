@@ -2,7 +2,7 @@ import type { ServerWebSocket } from "bun";
 import type {
   ClientToServerMessage,
   ServerToClientMessage,
-} from "./communication";
+} from "./server/communication";
 
 const state = {
   users: {} as Record<string, ServerWebSocket<unknown>>,
@@ -12,9 +12,9 @@ const state = {
 
 setInterval(() => {
   state.admins.forEach((ws) => {
-    ws.send(JSON.stringify(state));
+    ws.send(JSON.stringify(state, null, 2));
   });
-}, 100);
+}, 10);
 
 const server = Bun.serve({
   async fetch(req, server) {
@@ -28,8 +28,9 @@ const server = Bun.serve({
         },
       });
     }
+
     if (path === "/") {
-      const build = await Bun.build({ entrypoints: ["./front/user.ts"] });
+      const build = await Bun.build({ entrypoints: ["./src/front/user.ts"] });
       const script = await build.outputs[0].text();
       return new Response(
         `<!DOCTYPE html> <html> <body> <script defer> ${script} </script> </body> </html>`,
@@ -37,13 +38,22 @@ const server = Bun.serve({
       );
     }
     if (path === "/admin") {
-      const build = await Bun.build({ entrypoints: ["./front/admin.ts"] });
+      const build = await Bun.build({ entrypoints: ["./src/front/admin.ts"] });
       const script = await build.outputs[0].text();
       return new Response(
         `<!DOCTYPE html> <html> <body> <script defer> ${script} </script> </body> </html>`,
         { headers: { "Content-Type": "text/html" } },
       );
     }
+    if (path === "/tv") {
+      const build = await Bun.build({ entrypoints: ["./src/front/tv.ts"] });
+      const script = await build.outputs[0].text();
+      return new Response(
+        `<!DOCTYPE html> <html> <body> <script defer> ${script} </script> </body> </html>`,
+        { headers: { "Content-Type": "text/html" } },
+      );
+    }
+
     return new Response("not found", { status: 404 });
   },
   websocket: {
@@ -68,14 +78,7 @@ const server = Bun.serve({
           console.log("unhandled message", data);
       }
     },
-    open(ws) {
-      // console.log(`connection opened: ${ws.data.uuid}`);
-      // if (ws.data.admin) {
-      //   state.admins.set(ws.data.uuid, { ws });
-      // } else {
-      //   state.users.set(ws.data.uuid, { ws });
-      // }
-    },
+    open(ws) {},
     close(ws, code, message) {
       const user = Object.entries(state.users).find(([, user]) => user === ws);
       if (user) {
@@ -89,9 +92,5 @@ const server = Bun.serve({
     drain(ws) {},
   },
 });
-
-// function sendMessage(ws: ServerWebSocket, message: ServerToClientMessage) {
-//   ws.send(JSON.stringify(message));
-// }
 
 console.log(`server started at ${server.url.href}`);
